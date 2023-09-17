@@ -1,0 +1,35 @@
+# Create a ServiceAccount named "my-service-account" in the default namespace.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service-account
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: service-roles
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["create", "get", "list", "update", "delete"]
+- apiGroups: [""]
+  resources: ["services", pods"]
+  verbs: ["create", "list"]
+
+---
+
+# Create a ClusterRoleBinding that associates the "view-pods" ClusterRole with the "my-service-account" ServiceAccount in the default namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: service-roles-binding
+subjects:
+- kind: ServiceAccount
+  name: my-service-account
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: service-roles
+  apiGroup: rbac.authorization.k8s.io

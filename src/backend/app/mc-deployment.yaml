@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s_minecraft-server-container_mc-server-1-6b66c4f557-prt2g_default_18215d93-71a3-4f2f-9eec-e06d16f923eb_6
+# spec:
+#   replicas: 1  # You can adjust the number of replicas as needed
+#   selector:
+#     matchLabels:
+#       app: minecraft-server
+#   template:
+#     metadata:
+#       labels:
+#         app: minecraft-server
+#     spec:
+#       containers:
+#       - name: minecraft-server-container
+#         image: itzg/minecraft-server
+#         ports:
+#         - containerPort: 25565  # Port for Minecraft server
