@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from kubernetes import client, config
 
 import sys
+import subprocess
 
 from uuid import uuid4
 	
@@ -54,6 +55,13 @@ def delete_server(server_id):
         # Delete the service for the pod
         k8s_core_v1.delete_namespaced_service(name=f"mc-svc-{server_id}", namespace="default")
 
+        # Delete the PVC and PV
+        k8s_core_v1.delete_namespaced_persistent_volume_claim(name=f"pvc-{server_id}", namespace="default")
+        k8s_core_v1.delete_persistent_volume(name=f"pv-{server_id}")
+
+        # Delete hostpath files
+        clean_hostpath_directory(server_id)
+
         return jsonify({'message': f'Deleted server with identifier {server_id}'}), 200
     except Exception as e:
         return jsonify({'error': f'Error deleting server {server_id}: {e}'}), 500
@@ -86,6 +94,23 @@ def create_server():
 
         # RETURN NTOES: Must specify StorageClass otherwise it defaults to some weird folder in the Docker Desktop VM
 
+        # Create a persistent volume (PV) on the host (Docker Desktop VM ?)
+        k8s_core_v1.create_persistent_volume(
+            client.V1PersistentVolume(
+                api_version="v1",
+                kind="PersistentVolume",
+                metadata=client.V1ObjectMeta(name=f"pv-{server_id}"),
+                spec=client.V1PersistentVolumeSpec(
+                    storage_class_name="",
+                    capacity={"storage": "30Gi"},  # Adjust storage capacity as needed
+                    volume_mode="Filesystem",  # Set to "Block" for raw block devices
+                    access_modes=["ReadWriteMany"],  # Adjust access mode as needed
+                    persistent_volume_reclaim_policy="Delete",  # Adjust reclaim policy as needed
+                    host_path=client.V1HostPathVolumeSource(path=f"/var/lib/docker/volumes/mc/{server_id}/"),  # Specify the host path
+                ),
+            )
+        )
+
         # Create a persistent volume claim (PVC)
         k8s_core_v1.create_namespaced_persistent_volume_claim(
             namespace="default",
@@ -94,26 +119,12 @@ def create_server():
                 kind="PersistentVolumeClaim",
                 metadata=client.V1ObjectMeta(name=f"pvc-{server_id}"),
                 spec=client.V1PersistentVolumeClaimSpec(
+                    storage_class_name="",
                     access_modes=["ReadWriteMany"],
+                    volume_name=f"pv-{server_id}",
                     resources=client.V1ResourceRequirements(
                         requests={"storage": "30Gi"}  # TODO make storage configurable
                     ),
-                ),
-            )
-        )
-        
-        # Create a persistent volume (PV) on the host
-        k8s_core_v1.create_persistent_volume(
-            client.V1PersistentVolume(
-                api_version="v1",
-                kind="PersistentVolume",
-                metadata=client.V1ObjectMeta(name=f"pv-{server_id}"),
-                spec=client.V1PersistentVolumeSpec(
-                    capacity={"storage": "10Gi"},  # Adjust storage capacity as needed
-                    volume_mode="Filesystem",  # Set to "Block" for raw block devices
-                    access_modes=["ReadWriteMany"],  # Adjust access mode as needed
-                    persistent_volume_reclaim_policy="Retain",  # Adjust reclaim policy as needed
-                    host_path=client.V1HostPathVolumeSource(path=f"/Users/sunnyjiao/mc_servers/{server_id}/"),  # Specify the host path
                 ),
             )
         )
@@ -208,6 +219,11 @@ def start_server(server_id):
             print(f"Deployment 'mc-server-{server_id}' not found in namespace 'default'."), 404
         else:
             print(f"Error scaling up Deployment 'mc-server-{server_id}' in namespace 'default': {e}"), 500
+
+
+# Called after deleting a PV to also remove the hostpath dir.
+def clean_hostpath_directory(server_id):
+    subprocess.run(["rm", "-rf", f"/var/lib/docker/volumes/mc/{server_id}"])
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
