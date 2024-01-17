@@ -21,9 +21,12 @@ def hello():
 @app.route("/list")
 def get_pods_list():
     pods_list = k8s_core_v1.list_namespaced_pod(namespace='default')
-    pods = [{"name": item.metadata.name, "labels": item.metadata.labels} for item in pods_list.items]
+    deployments_list = k8s_apps_v1.list_namespaced_deployment(namespace='default')
 
-    return pods
+    pods = [{"name": item.metadata.name, "labels": item.metadata.labels} for item in pods_list.items]
+    deployments = [{"name": item.metadata.name, "labels": item.metadata.labels, "avail_replicas": item.status.available_replicas} for item in deployments_list.items]
+
+    return {"pods": pods, "deployments": deployments}
 
 
 @app.route("/fetch")
