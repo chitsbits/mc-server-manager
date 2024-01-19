@@ -12,7 +12,7 @@ metadata:
   name: service-roles
 rules:
 - apiGroups: ["apps"]
-  resources: ["deployments"]
+  resources: ["deployments", "statefulsets"]
   verbs: ["create", "get", "list", "update", "delete"]
 - apiGroups: [""]
   resources: ["services", pods", "persistentvolumeclaims", "persistentvolumes"]
