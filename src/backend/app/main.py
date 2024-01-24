@@ -24,7 +24,10 @@ def get_pods_list():
     pods_list = k8s_core_v1.list_namespaced_pod(namespace="default")
     deployments_list = k8s_apps_v1.list_namespaced_deployment(namespace="default")
     persistent_volumes_list = k8s_core_v1.list_persistent_volume()
-    statefulsets = k8s_apps_v1.list_namespaced_stateful_set()
+    persistent_volume_claims_list = k8s_core_v1.list_namespaced_persistent_volume_claim(
+        namespace="default"
+    )
+    statefulsets = k8s_apps_v1.list_namespaced_stateful_set(namespace="default")
 
     pods = [
         {"name": item.metadata.name, "labels": item.metadata.labels}
@@ -37,6 +40,14 @@ def get_pods_list():
             "avail_replicas": item.status.available_replicas,
         }
         for item in deployments_list.items
+    ]
+    claims = [
+        {
+            "name": item.metadata.name,
+            "labels": item.metadata.labels,
+            "status": item.status.phase,
+        }
+        for item in persistent_volume_claims_list.items
     ]
     volumes = [
         {
@@ -56,7 +67,13 @@ def get_pods_list():
         for item in statefulsets.items
     ]
 
-    return {"pods": pods, "deployments": deployments, "statefulsets": statefulsets, "volumes": volumes}
+    return {
+        "pods": pods,
+        "deployments": deployments,
+        "statefulsets": statefulsets,
+        "volumes": volumes,
+        "claims": claims,
+    }
 
 
 @app.route("/fetch")
@@ -67,6 +84,7 @@ def fetch():
 @app.route("/delete-server/<server_id>")
 def delete_server(server_id):
     try:
+        # Delete Statefulset of server
         k8s_apps_v1.delete_namespaced_stateful_set(
             name=f"mc-server-{server_id}",
             namespace="default",
@@ -83,8 +101,7 @@ def delete_server(server_id):
             name=f"mc-headless-svc-{server_id}", namespace="default"
         )
 
-        # Since StatefulSets use a volumeClaimTemplate, PVCs are dynamically created.
-        # You should delete these PVCs as well.
+        # Delete PVC(s)
         pvc_list = k8s_core_v1.list_namespaced_persistent_volume_claim(
             namespace="default", label_selector=f"server-id={server_id}"
         )
@@ -93,6 +110,7 @@ def delete_server(server_id):
                 k8s_core_v1.delete_namespaced_persistent_volume_claim(
                     name=pvc.metadata.name, namespace="default"
                 )
+                print(pvc.metadata.name, " deleted")
             except client.exceptions.ApiException as e:
                 print(f"Error deleting PVC: {e}", file=sys.stderr)
 
@@ -191,6 +209,26 @@ def create_server():
             ),
         )
 
+        # Create PVC for the server
+        pvc = client.V1PersistentVolumeClaim(
+            api_version="v1",
+            kind="PersistentVolumeClaim",
+            metadata=client.V1ObjectMeta(
+                name=f"pvc-{server_id}", labels={"server-id": server_id}
+            ),
+            spec=client.V1PersistentVolumeClaimSpec(
+                access_modes=["ReadWriteOnce"],
+                resources=client.V1ResourceRequirements(requests={"storage": "30Gi"}),
+                selector=client.V1LabelSelector(
+                    match_labels={"type": "minecraft-volume", "server-id": server_id}
+                ),
+                storage_class_name="",  # Set to an empty string to prevent dynamic provisioning
+            ),
+        )
+        k8s_core_v1.create_namespaced_persistent_volume_claim(
+            namespace="default", body=pvc
+        )
+
         # Create the StatefulSet
         k8s_apps_v1.create_namespaced_stateful_set(
             namespace="default",  # Replace with the desired namespace
@@ -204,9 +242,7 @@ def create_server():
                     service_name=f"mc-headless-svc-{server_id}",  # Name of the service that governs this StatefulSet
                     replicas=1,
                     selector=client.V1LabelSelector(
-                        match_labels={
-                            "app": "minecraft-server"
-                        }  # Specify the same labels as in pod_template_metadata
+                        match_labels={"app": "minecraft-server"}
                     ),
                     template=client.V1PodTemplateSpec(
                         metadata=client.V1ObjectMeta(
@@ -214,31 +250,16 @@ def create_server():
                         ),
                         spec=client.V1PodSpec(
                             containers=[itzg_container],
+                            volumes=[
+                                client.V1Volume(
+                                    name=f"volume-{server_id}",
+                                    persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                                        claim_name=f"pvc-{server_id}"
+                                    ),
+                                )
+                            ],
                         ),
                     ),
-                    volume_claim_templates=[
-                        client.V1PersistentVolumeClaim(
-                            metadata=client.V1ObjectMeta(
-                                name=f"mc-server-volume",
-                            ),
-                            spec=client.V1PersistentVolumeClaimSpec(
-                                selector=client.V1LabelSelector(
-                                    match_labels={
-                                        "type": "minecraft-volume",
-                                        "server-id": server_id,
-                                    }
-                                ),
-                                access_modes=[
-                                    "ReadWriteOnce"
-                                ],  # Common for StatefulSet
-                                resources=client.V1ResourceRequirements(
-                                    requests={
-                                        "storage": "30Gi"
-                                    }  # Adjust as per your storage needs
-                                ),
-                            ),
-                        )
-                    ],
                 ),
             ),
         )
@@ -260,14 +281,14 @@ def create_server():
 @app.get("/stop-server/<server_id>")
 def stop_server(server_id):
     try:
-        # Get the current Deployment object
+        # Get the current Statefulset object
         stateful_set = k8s_apps_v1.read_namespaced_stateful_set(
             name=f"mc-server-{server_id}", namespace="default"
         )
         # Update the desired replica count to 0
         stateful_set.spec.replicas = 0
-        # Apply the updated Deployment object to the cluster
-        k8s_apps_v1.replace_namespaced_stateful_set_scale(
+        # Apply the updated Statefulset object to the cluster
+        k8s_apps_v1.replace_namespaced_stateful_set(
             name=f"mc-server-{server_id}", namespace="default", body=stateful_set
         )
 
@@ -275,6 +296,50 @@ def stop_server(server_id):
             jsonify(
                 {
                     "message": f"Successfully stopped server with id: {server_id}",
+                    "server_id": server_id,
+                }
+            ),
+            200,
+        )
+    except client.rest.ApiException as e:
+        if e.status == 404:
+            return (
+                jsonify(
+                    {
+                        "message": f"Statefulset 'mc-server-{server_id}' not found in namespace 'default'."
+                    }
+                ),
+                404,
+            )
+        else:
+            return (
+                jsonify(
+                    {
+                        "message": f"Error scaling down Statefulset 'mc-server-{server_id}' in namespace 'default': {e}"
+                    }
+                ),
+                500,
+            )
+
+
+@app.get("/start-server/<server_id>")
+def start_server(server_id):
+    try:
+        # Get the current StatefulSet object
+        stateful_set = k8s_apps_v1.read_namespaced_stateful_set(
+            name=f"mc-server-{server_id}", namespace="default"
+        )
+        # Update the desired replica count to 1
+        stateful_set.spec.replicas = 1
+        # Apply the updated StatefulSet object to the cluster
+        k8s_apps_v1.replace_namespaced_stateful_set(
+            name=f"mc-server-{server_id}", namespace="default", body=stateful_set
+        )
+
+        return (
+            jsonify(
+                {
+                    "message": f"Successfully started server with id: {server_id}",
                     "server_id": server_id,
                 }
             ),
@@ -294,51 +359,16 @@ def stop_server(server_id):
             return (
                 jsonify(
                     {
-                        "message": f"Error scaling down Deployment 'mc-server-{server_id}' in namespace 'default': {e}"
+                        "message": f"Error scaling up Deployment 'mc-server-{server_id}' in namespace 'default': {e}"
                     }
                 ),
                 500,
             )
 
 
-@app.get("/start-server/<server_id>")
-def start_server(server_id):
-    try:
-        # Get the current StatefulSet object
-        stateful_set = k8s_apps_v1.read_namespaced_stateful_set(
-            name=f"mc-server-{server_id}", namespace="default"
-        )
-        # Update the desired replica count to 1
-        stateful_set.spec.replicas = 1
-        # Apply the updated StatefulSet object to the cluster
-        k8s_apps_v1.replace_namespaced_stateful_set_scale(
-            name=f"mc-server-{server_id}", namespace="default", body=stateful_set
-        )
-
-        return (
-            jsonify(
-                {
-                    "message": f"Successfully started server with id: {server_id}",
-                    "server_id": server_id,
-                }
-            ),
-            200,
-        )
-    except client.rest.ApiException as e:
-        if e.status == 404:
-            print(
-                f"Deployment 'mc-server-{server_id}' not found in namespace 'default'."
-            ), 404
-        else:
-            print(
-                f"Error scaling up Deployment 'mc-server-{server_id}' in namespace 'default': {e}"
-            ), 500
-
-
 # Called after deleting a PV to also remove the hostpath dir.
 def clean_hostpath_directory(server_id):
-    # subprocess.run(["rm", "-rf", f"/var/lib/docker/volumes/mc/{server_id}"])
-    pass
+    subprocess.run(["rm", "-rf", f"/var/lib/docker/volumes/mc/{server_id}"])
 
 
 if __name__ == "__main__":

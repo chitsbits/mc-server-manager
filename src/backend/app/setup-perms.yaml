@@ -15,7 +15,7 @@ rules:
   resources: ["deployments", "statefulsets"]
   verbs: ["create", "get", "list", "update", "delete"]
 - apiGroups: [""]
-  resources: ["services", pods", "persistentvolumeclaims", "persistentvolumes"]
+  resources: ["services", "pods", "persistentvolumeclaims", "persistentvolumes"]
   verbs: ["create", "get", "list", "update", "delete"]
 
 ---
