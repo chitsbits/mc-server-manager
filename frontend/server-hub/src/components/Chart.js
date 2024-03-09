@@ -1,12 +1,12 @@
-import * as React from 'react';
-import { useTheme } from '@mui/material/styles';
-import { LineChart, axisClasses } from '@mui/x-charts';
+import { useTheme } from '@mui/material/styles'
+import { LineChart, axisClasses } from '@mui/x-charts'
+import * as React from 'react'
 
-import Title from './Title';
+import Title from './Title'
 
 // Generate Sales Data
 function createData(time, amount) {
-  return { time, amount: amount ?? null };
+  return { time, amount: amount ?? null }
 }
 
 const data = [
@@ -19,10 +19,10 @@ const data = [
   createData('18:00', 2400),
   createData('21:00', 2400),
   createData('24:00'),
-];
+]
 
 export default function Chart() {
-  const theme = useTheme();
+  const theme = useTheme()
 
   return (
     <React.Fragment>
@@ -64,8 +64,12 @@ export default function Chart() {
             },
           ]}
           sx={{
-            [`.${axisClasses.root} line`]: { stroke: theme.palette.text.secondary },
-            [`.${axisClasses.root} text`]: { fill: theme.palette.text.secondary },
+            [`.${axisClasses.root} line`]: {
+              stroke: theme.palette.text.secondary,
+            },
+            [`.${axisClasses.root} text`]: {
+              fill: theme.palette.text.secondary,
+            },
             [`& .${axisClasses.left} .${axisClasses.label}`]: {
               transform: 'translateX(-25px)',
             },
@@ -73,5 +77,5 @@ export default function Chart() {
         />
       </div>
     </React.Fragment>
-  );
+  )
 }
