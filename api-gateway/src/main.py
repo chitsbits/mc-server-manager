@@ -30,29 +30,30 @@ def stop_server(server_id):
     pass
 
 
-# ----- Server Configurations -----
+# ----- Server Templates -----
 
-@app.get("/server-configs")
-def get_server_configs_list():
+@app.get("/server-templates")
+def get_server_templates_list():
     pass
 
 
-@app.get('/server-configs/<config_id>')
-def get_server_config(config_id):
+@app.get('/server-templates/<template_id>')
+def get_server_template(template_id):
     pass
 
 
-@app.post("/server-configs")
-def create_server_config():
-    pass
-
-@app.put('/server-configs/<config_id>')
-def update_server_config(config_id):
+@app.post("/server-templates")
+def create_server_template():
     pass
 
 
-@app.delete("/server-configs/<config_id>")
-def delete_server_config(config_id):
+@app.put('/server-templates/<template_id>')
+def update_server_template(template_id):
+    pass
+
+
+@app.delete("/server-templates/<template_id>")
+def delete_server_template(template_id):
     pass
 
 

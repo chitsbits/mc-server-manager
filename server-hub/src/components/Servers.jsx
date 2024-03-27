@@ -10,6 +10,8 @@ const rows = [
   createData('manhunt', 25566, '01/01/2024', 4, 'Offline'),
 ];
 
+const BASE_URL = process.env.REACT_APP_API_GATEWAY_URL;
+
 export default function Servers() {
   const [serverList, setServerList] = useState({});
 
@@ -17,7 +19,8 @@ export default function Servers() {
     const getData = async () => {
       try {
         // const response = await getServerList();
-        const response = await axios.get('http://localhost:7000/list');
+        console.log(`fetching from ${BASE_URL}/list`);
+        const response = await axios.get(`${BASE_URL}/list`);
         setServerList(response.data);
       } catch (error) {
         console.error('Error fetching data', error);

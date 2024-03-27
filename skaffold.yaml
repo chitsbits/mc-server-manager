@@ -1,0 +1,29 @@
+apiVersion: skaffold/v2beta13
+kind: Config
+metadata:
+  name: minecraft-manager-app
+build:
+  artifacts:
+  - image: api-gateway
+    context: ./api-gateway
+    docker:
+      dockerfile: Dockerfile
+  - image: server-templates
+    context: ./server-templates
+    docker:
+      dockerfile: Dockerfile
+  - image: server-controller
+    context: ./server-controller
+    docker:
+      dockerfile: Dockerfile
+  # - image: server-hub
+  #   context: ./server-hub
+  #   docker:
+  #     dockerfile: Dockerfile
+deploy:
+  kubectl:
+    manifests:
+    - ./api-gateway/k8s/*
+    - ./server-templates/k8s/*
+    - ./server-controller/k8s/*
+    # - ./server-hub/k8s/*

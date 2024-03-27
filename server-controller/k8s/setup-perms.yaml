@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: my-service-account
+  name: controller-k8s-api-sv
 
 ---
 
@@ -20,14 +20,14 @@ rules:
 
 ---
 
-# Create a ClusterRoleBinding that associates the "view-pods" ClusterRole with the "my-service-account" ServiceAccount in the default namespace.
+# Create a ClusterRoleBinding that associates the "view-pods" ClusterRole with the "controller-k8s-api-sv" ServiceAccount in the default namespace.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: service-roles-binding
 subjects:
 - kind: ServiceAccount
-  name: my-service-account
+  name: controller-k8s-api-sv
   namespace: default
 roleRef:
   kind: ClusterRole

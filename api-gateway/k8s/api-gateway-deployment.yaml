@@ -1,35 +1,35 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: flask-server-api
+  name: api-gateway-sv
 spec:
   selector:
-    app: flask-server-api
+    app: api-gateway
   ports:
   - protocol: "TCP"
-    port: 7000
+    port: 80
     targetPort: 5000
+    nodePort: 31001
   type: LoadBalancer
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask-server-api
+  name: api-gateway
 spec:
   selector:
     matchLabels:
-      app: flask-server-api
+      app: api-gateway
   replicas: 1
   template:
     metadata:
       labels:
-        app: flask-server-api
+        app: api-gateway
     spec:
-      serviceAccountName: my-service-account
       containers:
-      - name: flask-server-api
-        image: flask-server-api:latest
+      - name: api-gateway
+        image: api-gateway:latest
         imagePullPolicy: Never
         ports:
         - containerPort: 5000

@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: flask-server-api
+  name: server-controller-sv
 spec:
   selector:
-    app: flask-server-api
+    app: server-controller
   ports:
   - protocol: "TCP"
     port: 7000
@@ -15,21 +15,21 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask-server-api
+  name: server-controller
 spec:
   selector:
     matchLabels:
-      app: flask-server-api
+      app: server-controller
   replicas: 1
   template:
     metadata:
       labels:
-        app: flask-server-api
+        app: server-controller
     spec:
-      serviceAccountName: my-service-account
+      serviceAccountName: controller-k8s-api-sv
       containers:
-      - name: flask-server-api
-        image: flask-server-api:latest
+      - name: server-controller
+        image: server-controller:latest
         imagePullPolicy: Never
         ports:
         - containerPort: 5000

@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: flask-server-api
+  name: server-templates-sv
 spec:
   selector:
-    app: flask-server-api
+    app: server-templates
   ports:
   - protocol: "TCP"
     port: 7000
@@ -15,21 +15,20 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask-server-api
+  name: server-templates
 spec:
   selector:
     matchLabels:
-      app: flask-server-api
+      app: server-templates
   replicas: 1
   template:
     metadata:
       labels:
-        app: flask-server-api
+        app: server-templates
     spec:
-      serviceAccountName: my-service-account
       containers:
-      - name: flask-server-api
-        image: flask-server-api:latest
+      - name: server-templates
+        image: server-templates:latest
         imagePullPolicy: Never
         ports:
         - containerPort: 5000
