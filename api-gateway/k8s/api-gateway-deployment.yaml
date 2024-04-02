@@ -3,14 +3,14 @@ kind: Service
 metadata:
   name: api-gateway-sv
 spec:
+  type: NodePort
   selector:
     app: api-gateway
   ports:
   - protocol: "TCP"
-    port: 80
+    port: 3721
     targetPort: 5000
     nodePort: 31001
-  type: LoadBalancer
 
 ---
 apiVersion: apps/v1

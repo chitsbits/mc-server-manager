@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import requests
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"])
@@ -9,7 +10,7 @@ CORS(app, origins=["http://localhost:3000"])
 def hello():
     return "API Gateway Service"
 
-# Authentication/Authorization
+# ----- Authentication/Authorization ------
 # TODO
 
 
@@ -17,7 +18,11 @@ def hello():
 
 @app.get("/servers")
 def get_server_list():
-    pass
+    try:
+        response = requests.get('http://server-controller-sv:31002/list')
+        return response.json()
+    except Exception as e:
+        return jsonify({"message": f"Error fetching server list"}), 500
 
 
 @app.post("/servers/<server_id>/start")

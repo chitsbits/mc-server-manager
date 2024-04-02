@@ -8,7 +8,7 @@ build:
     context: ./api-gateway
     docker:
       dockerfile: Dockerfile
-  - image: server-templates
+  - image: server-templates-api
     context: ./server-templates
     docker:
       dockerfile: Dockerfile

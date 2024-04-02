@@ -19,8 +19,8 @@ export default function Servers() {
     const getData = async () => {
       try {
         // const response = await getServerList();
-        console.log(`fetching from ${BASE_URL}/list`);
-        const response = await axios.get(`${BASE_URL}/list`);
+        console.log(`fetching from ${BASE_URL}/servers`);
+        const response = await axios.get(`${BASE_URL}/servers`);
         setServerList(response.data);
       } catch (error) {
         console.error('Error fetching data', error);

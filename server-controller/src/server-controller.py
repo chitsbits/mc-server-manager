@@ -13,7 +13,7 @@ k8s_core_v1 = client.CoreV1Api()
 k8s_apps_v1 = client.AppsV1Api()
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000"])
+# CORS(app, origins=["http://localhost:3000"])
 
 @app.route("/")
 def hello():
