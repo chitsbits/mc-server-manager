@@ -1,3 +1,5 @@
+console.log('initializing DB...');
+
 db.createUser({
   user: 'admin',
   pwd: 'password',
@@ -32,3 +34,5 @@ db.serverTemplates.insertMany([
   },
   // Add more templates as needed
 ]);
+
+console.log('initializing DB complete');

@@ -1,3 +1,4 @@
+# DB Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -9,32 +10,32 @@ spec:
   selector:
     app: server-templates-db
 ---
-server-templates-db
 
+# DB deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: server-templates-db
 spec:
+  selector: 
+    matchLabels:
+      app: server-templates-db
   replicas: 1
   template:
     metadata:
       labels:
         app: server-templates-db
     spec:
-      initContainers:
-      - name: init-server-templates-db
-        image: mongo:latest
-        command: ['sh', '-c', 'mongo mongodb://admin:password@localhost:27017/minecraftServerDB /mongo-init.js']
-        volumeMounts:
-        - name: server-templates-db-init-volume
-          mountPath: /mongo-init.js
-          subPath: mongo-init.js
       containers:
       - name: mongodb
         image: mongo:latest
         ports:
         - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: "admin"
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: "password"
         volumeMounts:
         - name: server-templates-db-data
           mountPath: /data/db
@@ -42,6 +43,3 @@ spec:
       - name: server-templates-db-data
         persistentVolumeClaim:
           claimName: server-templates-db-pvc
-      - name: server-templates-db-init-volume
-        configMap:
-          name: server-templates-db-init-script
