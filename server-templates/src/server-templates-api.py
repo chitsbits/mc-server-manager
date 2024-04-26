@@ -6,36 +6,38 @@ app = Flask(__name__)
 CORS(app)
 
 # MongoDB configuration
-app.config["MONGO_URI"] = "mongodb://localhost:27017/mcServerConfigs"
+app.config["MONGO_URI"] = "mongodb://admin:password@server-templates-db-sv.default.svc.cluster.local:27017/mcTemplatesDb?authSource=admin"
 mongo = PyMongo(app)
 
 @app.route('/')
 def index():
-    return jsonify(message="Server Configuration Service")
+    template = mongo.db.serverTemplates.find_one({"templateName": "Survival Mode"})
+
+    return jsonify(message=f"Server Templates Service, connected to MongoDB! {template}")
 
 
-@app.route('/config', methods=['POST'])
-def create_config():
-    server_config = request.json
-    mongo.db.serverConfigs.insert_one(server_config)
+@app.route('/template', methods=['POST'])
+def create_template():
+    server_template = request.json
+    mongo.db.serverTemplates.insert_one(server_template)
 
-    return jsonify(message="Server config created successfully"), 201
+    return jsonify(message="Server template created successfully"), 201
 
 
-@app.route('/config/<config_id>', methods=['PUT'])
-def update_config(config_id):
+@app.route('/template/<template_id>', methods=['PUT'])
+def update_template(template_id):
     updates = request.json
-    mongo.db.serverConfigs.update_one({"_id": config_id}, {"$set": updates})
+    mongo.db.serverTemplates.update_one({"_id": template_id}, {"$set": updates})
 
-    return jsonify(message="Server config updated successfully"), 200
+    return jsonify(message="Server template updated successfully"), 200
 
 
-@app.route('/config/<config_id>', methods=['DELETE'])
-def delete_config(config_id):
-    mongo.db.serverConfigs.delete_one({"_id": config_id})
+@app.route('/template/<template_id>', methods=['DELETE'])
+def delete_template(template_id):
+    mongo.db.serverTemplates.delete_one({"_id": template_id})
 
-    return jsonify(message="Server config deleted successfully"), 200
+    return jsonify(message="Server template deleted successfully"), 200
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0")

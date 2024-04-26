@@ -6,14 +6,14 @@ db.createUser({
   roles: [
     {
       role: 'readWrite',
-      db: 'minecraftServersDB',
+      db: 'mcTemplatesDb',
     },
   ],
 });
 
-db = db.getSiblingDB('minecraftServersDB');
+db = db.getSiblingDB('mcTemplatesDb');
 
-db.createCollection('serverTemplates');
+db.createCollection('templates');
 
 db.serverTemplates.createIndex({ templateName: 1 }, { unique: true });
 
