@@ -7,7 +7,7 @@ spec:
     app: server-controller
   ports:
   - protocol: "TCP"
-    port: 31002
+    port: 31003
     targetPort: 5000
 
 ---

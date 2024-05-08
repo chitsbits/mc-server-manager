@@ -1,3 +1,4 @@
+import sys
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
@@ -19,7 +20,7 @@ def hello():
 @app.get("/servers")
 def get_server_list():
     try:
-        response = requests.get('http://server-controller-sv:31002/list')
+        response = requests.get('http://server-controller-sv:31003/list')
         return response.json()
     except Exception as e:
         return jsonify({"message": f"Error fetching server list"}), 500
@@ -39,7 +40,12 @@ def stop_server(server_id):
 
 @app.get("/server-templates")
 def get_server_templates_list():
-    pass
+    try:
+        response = requests.get('http://server-templates-api-sv:31002/template')
+        print(response, file=sys.stderr)
+        return response.json()
+    except Exception as e:
+        return jsonify({"message": f"Error fetching server list"}), 500
 
 
 @app.get('/server-templates/<template_id>')

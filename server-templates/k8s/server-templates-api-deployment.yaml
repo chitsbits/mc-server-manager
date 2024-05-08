@@ -3,14 +3,14 @@ kind: Service
 metadata:
   name: server-templates-api-sv
 spec:
-  type: NodePort
+  # type: NodePort
   selector:
     app: server-templates-api
   ports:
   - protocol: "TCP"
-    port: 7000
+    port: 31002
     targetPort: 5000
-    nodePort: 31002
+    # nodePort: 31002
 
 ---
 apiVersion: apps/v1
