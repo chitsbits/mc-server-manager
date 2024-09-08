@@ -25,16 +25,39 @@ def get_server_list():
     except Exception as e:
         return jsonify({"message": f"Error fetching server list"}), 500
 
+@app.post("/servers/create")
+def create_server():
+    try:
+        body = request.get_json()
+        response = requests.post('http://server-controller-sv:31003/create-server', json=body)
+        return response.json()
+    except Exception as e:
+        return jsonify({"message": f"Error creating server"}), 500
 
 @app.post("/servers/<server_id>/start")
 def start_server(server_id):
-    pass
+    try:
+        response = requests.post(f"http://server-controller-sv:31003/{server_id}/start")
+        return response.json()
+    except Exception as e:
+        return jsonify({"message": f"Error starting server"}), 500
 
 
 @app.post("/servers/<server_id>/stop")
 def stop_server(server_id):
-    pass
+    try:
+        response = requests.post(f"http://server-controller-sv:31003/{server_id}/stop")
+        return response.json()
+    except Exception as e:
+        return jsonify({"message": f"Error stopping server"}), 500
 
+@app.delete("/servers/<server_id>")
+def delete_server(server_id):
+    try:
+        response = requests.delete(f"http://server-controller-sv:31003/{server_id}")
+        return response.json()
+    except Exception as e:
+        return jsonify({"message": f"Error deleting server"}), 500
 
 # ----- Server Templates -----
 
