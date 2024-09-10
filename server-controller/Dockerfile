@@ -14,6 +14,10 @@ RUN mkdir /app
 WORKDIR /app
 
 ADD . /app/
+
+# Add executable permissions to the script
+RUN chmod +x /app/src/helm-post-renderer.py
+
 RUN pip install -r requirements.txt
 
 EXPOSE 5000

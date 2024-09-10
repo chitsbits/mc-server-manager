@@ -1,5 +1,5 @@
 import sys
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
 import requests
 
@@ -20,10 +20,25 @@ def hello():
 @app.get("/servers")
 def get_server_list():
     try:
-        response = requests.get('http://server-controller-sv:31003/list')
+        response = requests.get('http://server-controller-sv:31003/status')
         return response.json()
     except Exception as e:
         return jsonify({"message": f"Error fetching server list"}), 500
+
+
+@app.get("/servers/status/all")
+def servers_status_stream():
+    # Forward the SSE request to the backend
+    backend_url = 'http://server-controller-sv:31003/status/all'  # Adjust to your backend URL
+
+    def stream():
+        with requests.get(backend_url, stream=True) as backend_response:
+            for line in backend_response.iter_lines():
+                if line:
+                    yield f"data: {line.decode('utf-8')}\n\n"
+
+    return Response(stream(), mimetype='text/event-stream')
+
 
 @app.post("/servers/create")
 def create_server():
@@ -33,6 +48,7 @@ def create_server():
         return response.json()
     except Exception as e:
         return jsonify({"message": f"Error creating server"}), 500
+
 
 @app.post("/servers/<server_id>/start")
 def start_server(server_id):
@@ -50,6 +66,7 @@ def stop_server(server_id):
         return response.json()
     except Exception as e:
         return jsonify({"message": f"Error stopping server"}), 500
+
 
 @app.delete("/servers/<server_id>")
 def delete_server(server_id):

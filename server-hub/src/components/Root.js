@@ -14,11 +14,11 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { ThemeProvider, createTheme, styled } from '@mui/material/styles';
 import * as React from 'react';
-import { mainListItems, secondaryListItems } from './listItems';
+import { mainListItems } from './listItems';
 
 import { Outlet } from 'react-router-dom';
 
-function Copyright(props) {
+function Footer(props) {
   return (
     <Typography
       variant="body2"
@@ -26,12 +26,12 @@ function Copyright(props) {
       align="center"
       {...props}
     >
-      {'Copyright © '}
-      <Link color="inherit" href="https://mui.com/">
-        Your Website
-      </Link>{' '}
-      {new Date().getFullYear()}
-      {'.'}
+      <Link
+        color="inherit"
+        href="https://github.com/chitsbits/mc-server-manager"
+      >
+        MC Server Manager
+      </Link>
     </Typography>
   );
 }
@@ -145,8 +145,8 @@ export default function Root() {
           <Divider />
           <List component="nav">
             {mainListItems}
-            <Divider sx={{ my: 1 }} />
-            {secondaryListItems}
+            {/* <Divider sx={{ my: 1 }} />
+            {secondaryListItems} */}
           </List>
         </Drawer>
         <Box
@@ -166,7 +166,7 @@ export default function Root() {
           {/* router outlet here */}
           <Outlet />
 
-          <Copyright sx={{ pt: 4 }} />
+          <Footer sx={{ pt: 4 }} />
         </Box>
       </Box>
     </ThemeProvider>
